@@ -10,7 +10,7 @@ colors = ['red', 'yellow', 'green', 'blue', 'purple', 'black']
 
 all_cards = []
 
-for i in range(0,11):
+for i in range(0,5):
             for color in colors:
                 all_cards.append(Card(i,color))
             
@@ -31,10 +31,11 @@ def show_cards(cards: list) -> tuple[list, list]:
 
 @app.command()
 def new_game() -> None:
-    global hand, board, players
+    global hand, board, players, finished
     num_players = console.input('    Cuántos jugadores quieres que haya?  ')
     parade.shuffle_deck()
 
+    finished = [False] * int(num_players)
     players = []
 
     for i in range(1, int(num_players) + 1):
@@ -43,7 +44,7 @@ def new_game() -> None:
     random.shuffle(players)
     board = parade.draw_card(7)
     update()
-    while parade.cards:
+    while not all(finished):
         for idx,player in enumerate(players):
             hand_header, hand_row = show_cards(player.hand)
             table_hand = Table(*hand_header, title='Your current hand', style="bold")
@@ -58,6 +59,22 @@ def new_game() -> None:
             table_cards.add_row(*cards_row)
             console.print(table_cards)
             update()
+            if all(finished):
+                console.print('Juego terminado')
+                for player in players:
+                    console.print(f'Total de cartas obtenidas de {player.name} -> {len(player.cards)} ')
+                    cards_header, cards_row = show_cards(player.cards)
+                    table_cards = Table(*cards_header, title='Your current cards obtained', style="bold")
+                    table_cards.add_row(*cards_row)
+                    console.print(table_cards)
+
+                    console.print('      ' +'------------------------------'*2, style="bold blink white")
+
+                    hand_header, hand_row = show_cards(player.hand)
+                    table_hand = Table(*hand_header, title='Your current hand', style="bold")
+                    table_hand.add_row(*hand_row)
+                    console.print(table_hand)
+                break
 
 @app.command()
 def update() -> None:
@@ -88,8 +105,10 @@ def play(x: int, idx: int) -> None:
             if board[i].color == removed.color or board[i].value <= removed.value:
                 card_get = board.pop(i) 
                 players[idx].cards.append(card_get)
-
-    players[idx].hand.append(parade.draw_card()[0])
+    try:
+        players[idx].hand.append(parade.draw_card()[0])
+    except IndexError:
+        finished[idx] = True
     board.append(removed)
 
     console.print(f'\n      El jugador {players[idx].name} ha terminado su ronda.')
