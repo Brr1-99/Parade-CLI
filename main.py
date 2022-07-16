@@ -21,12 +21,14 @@ console = Console()
 
 app = typer.Typer()
 
-def show_cards(cards: list) -> tuple[list, list]:
+def show_cards(cards: list, heading: str) -> None:
     """Creates the data for the header and row of the table"""
     
     header = [f'Card: {i+1}' for i in range(len(cards))]
     row = [f'[{card.color}]{str(card.value)}[/{card.color}]' for card in cards]
-    return header, row
+    table = Table(*header, title=f'{heading}', style="bold")
+    table.add_row(*row)
+    console.print(table)
 
 
 @app.command()
@@ -46,48 +48,33 @@ def new_game() -> None:
     update()
     while not all(finished):
         for idx,player in enumerate(players):
-            hand_header, hand_row = show_cards(player.hand)
-            table_hand = Table(*hand_header, title='Your current hand', style="bold")
-            table_hand.add_row(*hand_row)
-            console.print(table_hand)
+            show_cards(player.hand, 'Your current hand')
             next = console.input(f'    Qué carta quieres jugar a continuación {player.name}?  ')
             play(int(next), idx)
 
             console.print(f'Total de cartas obtenidas de {player.name} tras la ronda -> {len(player.cards)} ')
-            cards_header, cards_row = show_cards(player.cards)
-            table_cards = Table(*cards_header, title='Your current cards obtained', style="bold")
-            table_cards.add_row(*cards_row)
-            console.print(table_cards)
+            show_cards(player.cards, 'Your current cards obtained')
+
             update()
             if all(finished):
                 console.print('Juego terminado')
                 for player in players:
                     console.print(f'Total de cartas obtenidas de {player.name} -> {len(player.cards)} ')
-                    cards_header, cards_row = show_cards(player.cards)
-                    table_cards = Table(*cards_header, title='Your current cards obtained', style="bold")
-                    table_cards.add_row(*cards_row)
-                    console.print(table_cards)
+                    show_cards(player.cards, 'Your current cards obtained')
 
                     console.print('      ' +'------------------------------'*2, style="bold blink white")
 
-                    hand_header, hand_row = show_cards(player.hand)
-                    table_hand = Table(*hand_header, title='Your current hand', style="bold")
-                    table_hand.add_row(*hand_row)
-                    console.print(table_hand)
+                    show_cards(player.hand, 'Your current hand')
                 break
+
     for idx,player in enumerate(players):
             console.print(f'Total de cartas obtenidas de {player.name}')
-            cards_header, cards_row = show_cards(player.cards)
-            table_cards = Table(*cards_header, title='Your current cards obtained', style="bold")
-            table_cards.add_row(*cards_row)
-            console.print(table_cards)
+            show_cards(player.cards, 'Your current cards obtained')
 
             console.print('      ' +'------------------------------'*2, style="bold blink white")
 
-            hand_header, hand_row = show_cards(player.hand)
-            table_hand = Table(*hand_header, title='Your current hand', style="bold")
-            table_hand.add_row(*hand_row)
-            console.print(table_hand)
+            show_cards(player.hand, 'Your current hand')
+
             one, two = console.input(f'    Qué dos cartas quieres jugar {player.name}? -> x,y ').split(',')
             final_round(int(one), int(two), idx)
 
@@ -121,17 +108,11 @@ def update() -> None:
 
     console.print('\n')
 
-    board_header, board_row = show_cards(board)
-    table_board = Table(*board_header, title='Board', style="bold")
-    table_board.add_row(*board_row)
-    console.print(table_board)
+    show_cards(board, 'Board')
 
     console.print('\n')
     console.print('      ' +'------------------------------'*2, style="bold blink white")
-    console.print('\n')
-
-
-    console.print('\n')
+    console.print('\n' + '\n')
 
 @app.command()
 def play(x: int, idx: int) -> None:
