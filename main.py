@@ -75,6 +75,46 @@ def new_game() -> None:
                     table_hand.add_row(*hand_row)
                     console.print(table_hand)
                 break
+    for idx,player in enumerate(players):
+            console.print(f'Total de cartas obtenidas de {player.name}')
+            cards_header, cards_row = show_cards(player.cards)
+            table_cards = Table(*cards_header, title='Your current cards obtained', style="bold")
+            table_cards.add_row(*cards_row)
+            console.print(table_cards)
+
+            console.print('      ' +'------------------------------'*2, style="bold blink white")
+
+            hand_header, hand_row = show_cards(player.hand)
+            table_hand = Table(*hand_header, title='Your current hand', style="bold")
+            table_hand.add_row(*hand_row)
+            console.print(table_hand)
+            one, two = console.input(f'    Qué dos cartas quieres jugar {player.name}? -> x,y ').split(',')
+            final_round(int(one), int(two), idx)
+
+    score = final_results(players)
+
+    for color in colors:
+        maximo = -1 
+        id_color = -1
+        for idx,player in enumerate(score):
+            if player[color]['number'] > maximo:
+                maximo = player[color]['number']
+                id_color = idx
+            elif player[color]['number'] == maximo and maximo > 0 and id_color != -1:
+                id_color = -1
+        if id_color != -1:
+            score[idx][color]['score'] = score[idx][color]['number'] 
+
+    min_score = 50
+    id = -1
+    for idx,player in enumerate(score):
+        pointos = list(player.values())
+        total = sum(int(color['score']) for color in pointos)
+        if total < min_score:
+            min_score = total
+            id = idx
+
+    console.print(f'      The winner is player {id+1} with {min_score} points.')
 
 @app.command()
 def update() -> None:
@@ -112,6 +152,47 @@ def play(x: int, idx: int) -> None:
     board.append(removed)
 
     console.print(f'\n      El jugador {players[idx].name} ha terminado su ronda.')
+
+@app.command()
+def final_round(one: int, two: int, idx: int):
+    players[idx].cards.append(players[idx].hand[one-1])
+    players[idx].cards.append(players[idx].hand[two-1])
+
+
+def final_results(players: list[Player]) -> list[dict]:
+    scoreboard = []
+    for player in players:
+        cards = {
+            'red': {
+                'number': 0,
+                'score': 0,
+            },
+            'yellow': {
+                'number': 0,
+                'score': 0,
+            },
+            'green': {
+                'number': 0,
+                'score': 0,
+            },
+            'blue': {
+                'number': 0,
+                'score': 0,
+            },
+            'black': {
+                'number': 0,
+                'score': 0,
+            },
+            'purple': {
+                'number': 0,
+                'score': 0,
+            },
+        }
+        for card in player.cards:
+            cards[card.color]['number'] +=1
+            cards[card.color]['score'] += card.value
+        scoreboard.append(cards)
+    return scoreboard
 
 if __name__ == "__main__":
     app()
